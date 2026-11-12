@@ -1,69 +1,79 @@
 import Image from "next/image";
 
+// Página TEMPORAL de T2 para comparar estilos con la referencia. T7 la reemplaza.
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <header>
+        <div className="wrap bar">
+          <a href="#inicio" className="logo">
+            <span aria-hidden="true"></span>Buen Día
+          </a>
+          <nav aria-label="Secciones">
+            <ul>
+              <li><a href="#desayunos">Desayunos</a></li>
+              <li><a href="#tortas">Tortas</a></li>
+              <li><a href="#dulces">Dulces</a></li>
+            </ul>
+          </nav>
+          <button className="cart-btn" aria-haspopup="dialog">
+            Carrito <span className="count" aria-live="polite">0</span>
+            <span className="sr-only">productos</span>
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      <main id="inicio">
+        <div className="wrap">
+          <section className="hero">
+            <div>
+              <span className="eyebrow">Hecho a mano, cada mañana</span>
+              <h1>Desayunos que dicen <em>te quiero</em> sin decir una palabra.</h1>
+              <p>Cajas de desayuno personalizadas para cumpleaños, aniversarios y fechas especiales. Además, tortas por encargo y dulces artesanales recién horneados.</p>
+              <div className="cta-row">
+                <a href="#desayunos" className="btn btn-primary">Ver desayunos</a>
+                <a href="#tortas" className="btn btn-ghost">Tortas por encargo</a>
+              </div>
+            </div>
+            <div className="hero-img">
+              <Image src="/img/hero.png" alt="Caja de desayuno abierta con medialunas, frutas, jugo, café y alfajores" width={1408} height={768} priority />
+            </div>
+          </section>
+
+          <ol className="steps" aria-label="Cómo pedir">
+            <li><b>1</b>Elegí tus productos y sumalos al carrito</li>
+            <li><b>2</b>Completá tus datos y el horario de entrega</li>
+            <li><b>3</b>Te confirmamos por WhatsApp en menos de 30 min</li>
+            <li><b>4</b>Pagás y recibís tu pedido</li>
+          </ol>
+
+          <section className="cat" id="desayunos" aria-labelledby="h-des">
+            <div className="sec-head">
+              <div><h2 id="h-des">Cajas de desayuno</h2><p>Elegí el motivo y sorprendé a quien más querés.</p></div>
+              <div className="chips" role="group" aria-label="Filtrar desayunos por motivo">
+                <button className="chip" aria-pressed="true">Todos</button>
+                <button className="chip" aria-pressed="false">Cumpleaños</button>
+              </div>
+            </div>
+            <div className="grid">
+              <article className="card">
+                <div className="ph">
+                  <Image src="/img/cumple.png" alt="" width={1024} height={1024} />
+                  <span className="tag">Cumpleaños</span>
+                </div>
+                <div className="body">
+                  <h3>Producto de ejemplo</h3>
+                  <p className="desc">Tarjeta de verificación de estilos (T2).</p>
+                  <div className="foot">
+                    <span className="price">$ 18.500</span>
+                    <button className="add">Agregar</button>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
         </div>
       </main>
-    </div>
+    </>
   );
 }

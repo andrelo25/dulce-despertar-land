@@ -36,7 +36,7 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
   - Hacer: `supabase/migrations/0001_init.sql` con tablas, enums, checks, índices, RLS, bucket `product-images` y la RPC `create_order` (plan §4.2–§4.3, incluido el límite anti-abuso); `supabase/seed.sql` con los 11 productos de la referencia (líneas 273–285); instrucciones para crear el admin con `app_metadata.role='admin'` (en `README`).
   - Done (C1–C3, C18, C27, C28): aplicada la migración, verificar con la publishable key (rol `anon`): lee productos `active` y `unavailable`, no lee `hidden`, no lee `orders` ni `order_items`, no puede insertar en `orders` ni ejecutar `create_order`. Con la secret key (rol `service_role`), `create_order` crea un pedido con total correcto y rechaza un producto `hidden` devolviendo su nombre.
 
-- [ ] **T6. Clientes Supabase y catálogo cacheado**
+- [x] **T6. Clientes Supabase y catálogo cacheado**
   - Depende de: T5.
   - Hacer: `lib/supabase/publishable.ts`, `server.ts`, `secret.ts` (esta última con `import 'server-only'`); `lib/catalog.ts` con `getCatalog()` (`use cache`, `cacheTag('products')`, `cacheLife('minutes')`) y agrupación de motivos.
   - Done (C1–C4): una página temporal lista los productos desde la base; un producto `hidden` no aparece y uno `unavailable` aparece con su estado; build ok con `cacheComponents` sin errores de bloqueo.

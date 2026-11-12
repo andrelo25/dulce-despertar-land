@@ -43,7 +43,7 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
 
 ## Bloque D: Tienda pública
 
-- [ ] **T7. Catálogo público**
+- [x] **T7. Catálogo público**
   - Depende de: T2, T6.
   - Hacer: componentes `store/*` y `app/page.tsx` replicando la referencia; chips de motivo en desayunos y tortas; `next/image` con `remotePatterns` del dominio de Supabase en `next.config.ts`; pie sin enlace al panel.
   - Done (C1–C4, C19, C29): se ven las tres secciones con los datos de la base; filtrar por motivo muestra solo ese motivo; productos no disponibles muestran su etiqueta y botón deshabilitado; el HTML de `/` no contiene "admin".

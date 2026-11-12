@@ -1,3 +1,4 @@
+import { CartProvider } from "@/components/cart/CartProvider";
 import { Footer } from "@/components/store/Footer";
 import { Header } from "@/components/store/Header";
 import { Hero } from "@/components/store/Hero";
@@ -7,10 +8,12 @@ import { MIN_LEAD_HOURS } from "@/lib/config";
 import { groupBySection } from "@/lib/domain/catalog";
 
 export default async function Home() {
-  const bySection = groupBySection(await getCatalog());
+  const catalog = await getCatalog();
+  const bySection = groupBySection(catalog);
+  const activeIds = catalog.filter((p) => p.status === "active").map((p) => p.id);
 
   return (
-    <>
+    <CartProvider activeIds={activeIds}>
       <Header />
       <main id="inicio">
         <div className="wrap">
@@ -47,6 +50,6 @@ export default async function Home() {
         </div>
       </main>
       <Footer />
-    </>
+    </CartProvider>
   );
 }

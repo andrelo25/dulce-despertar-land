@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Product } from "@/lib/domain/catalog";
 import { formatMoney } from "@/lib/domain/money";
+import { AddControl } from "./AddControl";
 
 export function ProductCard({ product }: { product: Product }) {
   const off = product.status !== "active";
@@ -23,9 +24,7 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="desc">{product.description}</p>
         <div className="foot">
           <span className="price">{formatMoney(product.price)}</span>
-          <button className="add" disabled={off}>
-            {off ? "No disponible" : "Agregar"}
-          </button>
+          <AddControl product={product} />
         </div>
       </div>
     </article>

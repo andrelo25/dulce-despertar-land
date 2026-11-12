@@ -48,7 +48,7 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
   - Hacer: componentes `store/*` y `app/page.tsx` replicando la referencia; chips de motivo en desayunos y tortas; `next/image` con `remotePatterns` del dominio de Supabase en `next.config.ts`; pie sin enlace al panel.
   - Done (C1–C4, C19, C29): se ven las tres secciones con los datos de la base; filtrar por motivo muestra solo ese motivo; productos no disponibles muestran su etiqueta y botón deshabilitado; el HTML de `/` no contiene "admin".
 
-- [ ] **T8. Carrito**
+- [x] **T8. Carrito**
   - Depende de: T3, T7.
   - Hacer: `CartProvider` (reductor puro + `localStorage` hidratado tras montar), botón agregar/stepper en tarjetas, contador del header, conciliación con el catálogo.
   - Done (C5, C8, C9 parcial): pruebas del reductor pasan (agregar, quitar, topes 20/50, recorte de mensajes al bajar la cantidad); manual: recargar conserva el carrito y el contador se actualiza al instante; un producto que dejó de estar activo se descarta con aviso.

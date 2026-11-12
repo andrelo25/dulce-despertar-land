@@ -1,3 +1,5 @@
+import { CartCount } from "@/components/cart/CartCount";
+
 export function Header() {
   return (
     <header>
@@ -13,7 +15,7 @@ export function Header() {
           </ul>
         </nav>
         <button className="cart-btn" aria-haspopup="dialog">
-          Carrito <span className="count" aria-live="polite">0</span>
+          Carrito <span className="count" aria-live="polite"><CartCount /></span>
           <span className="sr-only">productos</span>
         </button>
       </div>

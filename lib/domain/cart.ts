@@ -1,4 +1,4 @@
-import { MAX_PER_PRODUCT, MAX_TOTAL } from "../config";
+import { MAX_PER_PRODUCT, MAX_TOTAL, MESSAGE_MAX } from "../config";
 
 /** Carrito: por producto, cantidad y un mensaje opcional por unidad (se usan desde T9). */
 export type CartItem = { qty: number; messages: string[] };
@@ -7,6 +7,9 @@ export type CartState = Record<string, CartItem>;
 export type CartAction =
   | { type: "inc"; id: string }
   | { type: "dec"; id: string }
+  | { type: "remove"; id: string }
+  | { type: "setMessage"; id: string; index: number; message: string }
+  | { type: "clearMessages"; id: string }
   | { type: "clear" }
   /** Reemplaza el carrito con el leído de localStorage (ya conciliado). */
   | { type: "hydrate"; cart: CartState };
@@ -39,6 +42,25 @@ export function cartReducer(cart: CartState, action: CartAction): CartState {
       if (item.qty <= 1) return rest;
       const qty = item.qty - 1;
       return { ...rest, [action.id]: { qty, messages: item.messages.slice(0, qty) } };
+    }
+    case "remove": {
+      if (!cart[action.id]) return cart;
+      const { [action.id]: _removed, ...rest } = cart;
+      void _removed;
+      return rest;
+    }
+    case "setMessage": {
+      const item = cart[action.id];
+      if (!item || action.index < 0 || action.index >= item.qty) return cart;
+      const messages = [...item.messages];
+      while (messages.length < item.qty) messages.push("");
+      messages[action.index] = action.message.slice(0, MESSAGE_MAX);
+      return { ...cart, [action.id]: { ...item, messages } };
+    }
+    case "clearMessages": {
+      const item = cart[action.id];
+      if (!item) return cart;
+      return { ...cart, [action.id]: { ...item, messages: [] } };
     }
     case "clear":
       return EMPTY_CART;

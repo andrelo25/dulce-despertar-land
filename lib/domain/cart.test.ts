@@ -49,6 +49,35 @@ describe("cartReducer", () => {
     expect(cartReducer(c, { type: "dec", id: "a" }).a.messages).toEqual(["uno", "dos"]);
   });
 
+  it("remove elimina un producto por completo", () => {
+    const c = add(add(EMPTY_CART, "a", 3), "b", 2);
+    expect(cartReducer(c, { type: "remove", id: "a" })).toEqual({
+      b: { qty: 2, messages: [] },
+    });
+    expect(cartReducer(EMPTY_CART, { type: "remove", id: "x" })).toBe(EMPTY_CART);
+  });
+
+  it("setMessage actualiza el mensaje de la unidad y respeta el tope de 150 caracteres", () => {
+    let c = add(EMPTY_CART, "a", 3);
+    c = cartReducer(c, { type: "setMessage", id: "a", index: 0, message: "Feliz cumple" });
+    c = cartReducer(c, { type: "setMessage", id: "a", index: 2, message: "x".repeat(160) });
+    expect(c.a.messages[0]).toBe("Feliz cumple");
+    expect(c.a.messages[1]).toBe("");
+    expect(c.a.messages[2]).toBe("x".repeat(150));
+
+    // Índice fuera de rango se ignora
+    expect(cartReducer(c, { type: "setMessage", id: "a", index: 5, message: "invalido" })).toBe(c);
+    expect(cartReducer(c, { type: "setMessage", id: "a", index: -1, message: "invalido" })).toBe(c);
+  });
+
+  it("clearMessages limpia todos los mensajes del producto", () => {
+    let c = add(EMPTY_CART, "a", 2);
+    c = cartReducer(c, { type: "setMessage", id: "a", index: 0, message: "mensaje" });
+    expect(c.a.messages).toEqual(["mensaje", ""]);
+    c = cartReducer(c, { type: "clearMessages", id: "a" });
+    expect(c.a.messages).toEqual([]);
+  });
+
   it("clear vacía el carrito", () => {
     expect(cartReducer(add(EMPTY_CART, "a"), { type: "clear" })).toEqual({});
   });

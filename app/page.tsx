@@ -1,4 +1,6 @@
+import { CartDrawer } from "@/components/cart/CartDrawer";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { OpenCartButton } from "@/components/cart/OpenCartButton";
 import { Footer } from "@/components/store/Footer";
 import { Header } from "@/components/store/Header";
 import { Hero } from "@/components/store/Hero";
@@ -10,10 +12,9 @@ import { groupBySection } from "@/lib/domain/catalog";
 export default async function Home() {
   const catalog = await getCatalog();
   const bySection = groupBySection(catalog);
-  const activeIds = catalog.filter((p) => p.status === "active").map((p) => p.id);
 
   return (
-    <CartProvider activeIds={activeIds}>
+    <CartProvider products={catalog}>
       <Header />
       <main id="inicio">
         <div className="wrap">
@@ -45,11 +46,12 @@ export default async function Home() {
               <h2>¿Querés algo a medida?</h2>
               <p>Armamos cajas personalizadas con tu mensaje, colores y productos favoritos.</p>
             </div>
-            <button className="btn btn-primary">Ir al carrito</button>
+            <OpenCartButton className="btn btn-primary">Ir al carrito</OpenCartButton>
           </div>
         </div>
       </main>
       <Footer />
+      <CartDrawer />
     </CartProvider>
   );
 }

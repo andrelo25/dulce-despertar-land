@@ -53,14 +53,14 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
   - Hacer: `CartProvider` (reductor puro + `localStorage` hidratado tras montar), botón agregar/stepper en tarjetas, contador del header, conciliación con el catálogo.
   - Done (C5, C8, C9 parcial): pruebas del reductor pasan (agregar, quitar, topes 20/50, recorte de mensajes al bajar la cantidad); manual: recargar conserva el carrito y el contador se actualiza al instante; un producto que dejó de estar activo se descarta con aviso.
 
-- [ ] **T9. Drawer: carrito y personalización**
+- [x] **T9. Drawer: carrito y personalización**
   - Depende de: T8.
   - Hacer: `CartDrawer` accesible (rol dialog, overlay, Escape, foco), paso Carrito con subtotal, línea de envío y total según entrega, y el bloque "Agregar mensaje personalizado" con un campo por unidad solo para desayunos y tortas.
   - Done (C6, C9): con 3 unidades de una caja aparecen 3 campos independientes de máximo 150 caracteres; los dulces no muestran la opción; con carrito vacío no hay botón "Finalizar pedido".
 
 ## Bloque E: Pedido
 
-- [ ] **T10. Server Action `submitOrder`**
+- [x] **T10. Server Action `submitOrder`**
   - Depende de: T4, T5, T6.
   - Hacer: `lib/actions/orders.ts`: validar con el esquema, llamar la RPC con la secret key, devolver errores por campo o lista de productos no disponibles; sin aviso al admin todavía; errores genéricos hacia el cliente.
   - Done (C7, C10–C16): pruebas con dependencias simuladas pasan; manual contra la base: un pedido válido crea fila `pendiente` con total igual al calculado; precio manipulado en el cliente se ignora; producto pasado a `unavailable` tras armar el carrito devuelve su nombre y no crea pedido; el honeypot lleno no crea pedido.

@@ -65,7 +65,7 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
   - Hacer: `lib/actions/orders.ts`: validar con el esquema, llamar la RPC con la secret key, devolver errores por campo o lista de productos no disponibles; sin aviso al admin todavía; errores genéricos hacia el cliente.
   - Done (C7, C10–C16): pruebas con dependencias simuladas pasan; manual contra la base: un pedido válido crea fila `pendiente` con total igual al calculado; precio manipulado en el cliente se ignora; producto pasado a `unavailable` tras armar el carrito devuelve su nombre y no crea pedido; el honeypot lleno no crea pedido.
 
-- [ ] **T11. Drawer: checkout y confirmación**
+- [x] **T11. Drawer: checkout y confirmación**
   - Depende de: T9, T10.
   - Hacer: pasos Datos y Confirmado de la referencia (líneas 357–405) conectados con `useActionState`; campo oculto de honeypot; franjas deshabilitadas según la regla de 12 h (cálculo en cliente tras montar); pantalla final con id de pedido, resumen, envío, medios de pago (efectivo al retirar o transferencia al alias `BUENDIA.DESAYUNOS`) y aviso de 30 min; vaciar el carrito al confirmar.
   - Done (C10–C15): flujo completo en navegador: errores por campo visibles; domicilio pide dirección y retiro muestra la dirección del local; pedido válido queda `pendiente` en la base, el carrito se vacía y se ve el id; no hay ninguna pantalla de registro.

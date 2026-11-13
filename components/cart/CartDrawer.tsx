@@ -3,18 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "./CartProvider";
 import { CartStep } from "./CartStep";
+import { CheckoutStep } from "./CheckoutStep";
+import { DoneStep, type ConfirmedOrder } from "./DoneStep";
 
 export type DrawerStep = "cart" | "checkout" | "done";
 
 export function CartDrawer() {
   const { isOpen, close } = useCart();
   const [step, setStep] = useState<DrawerStep>("cart");
+  const [confirmedOrder, setConfirmedOrder] = useState<ConfirmedOrder | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const handleClose = () => {
     close();
     setStep("cart");
+    setConfirmedOrder(null);
+  };
+
+  const handleOrderConfirmed = (order: ConfirmedOrder) => {
+    setConfirmedOrder(order);
+    setStep("done");
   };
 
   // Focus management & Escape handling
@@ -38,6 +47,7 @@ export function CartDrawer() {
         e.preventDefault();
         close();
         setStep("cart");
+        setConfirmedOrder(null);
       }
     };
 
@@ -97,6 +107,20 @@ export function CartDrawer() {
         {step === "cart" && (
           <CartStep
             onToCheckout={() => setStep("checkout")}
+            onClose={handleClose}
+          />
+        )}
+
+        {step === "checkout" && (
+          <CheckoutStep
+            onBack={() => setStep("cart")}
+            onOrderConfirmed={handleOrderConfirmed}
+          />
+        )}
+
+        {step === "done" && confirmedOrder && (
+          <DoneStep
+            order={confirmedOrder}
             onClose={handleClose}
           />
         )}

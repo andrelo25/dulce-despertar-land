@@ -28,7 +28,7 @@ export const SLOTS = [
 export type Slot = (typeof SLOTS)[number];
 
 export const STORE = {
-  name: "Buen Día",
+  name: "Dulce Despertar",
   // TODO(usuario): reemplazar por la dirección real del local antes de T11.
   address: "Dirección del local (a definir)",
   paymentAlias: "BUENDIA.DESAYUNOS",

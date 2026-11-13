@@ -15,7 +15,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Buen Día — Desayunos, Tortas y Dulces",
+  title: "Dulce Despertar — Desayunos, Tortas y Dulces",
   description:
     "Cajas de desayuno personalizadas, tortas por encargo y dulces artesanales. Armá tu pedido y te confirmamos por WhatsApp.",
 };

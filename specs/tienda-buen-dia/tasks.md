@@ -84,12 +84,12 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
 
 ## Bloque G: Administración
 
-- [ ] **T14. Autenticación del administrador**
+- [x] **T14. Autenticación del administrador**
   - Depende de: T6.
   - Hacer: `lib/dal.ts` con `verifyAdmin()`, `app/admin/login/page.tsx`, acciones `login`/`logout`, `proxy.ts` con `matcher: ['/admin/:path*']`, `app/admin/layout.tsx` con `noindex`.
   - Done (C18, C19): sin sesión, `/admin` y `/admin/productos` redirigen al login; credenciales erróneas muestran "Credenciales inválidas" sin detalles; un usuario autenticado sin `role=admin` no accede; con admin accede y puede cerrar sesión; la cookie es `httpOnly`.
 
-- [ ] **T15. Panel de pedidos**
+- [x] **T15. Panel de pedidos**
   - Depende de: T11, T14.
   - Hacer: `app/admin/page.tsx` con estadísticas y lista (estilos `.stats`, `.order`, `.pill`, `.timer` de la referencia), `OrderCountdown`, mensajes personalizados por unidad, refresco cada 30 s, filtro por estado.
   - Done (C20, C25): un pedido de prueba muestra todos los campos del criterio 20, incluidos los mensajes por unidad; el contador pasa de "Quedan X min" a "Demorado X min" pasados 30 minutos; la lista se actualiza sola al entrar un pedido nuevo.

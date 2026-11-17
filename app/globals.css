@@ -161,6 +161,8 @@ fieldset{border:0;padding:0;margin:0 0 14px}
 .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:700}
 .pill.pend{background:#FDE7C9;color:#8A4B10}
 .pill.ok{background:#DDEFD9;color:#2E6A2A}
+.pill.done{background:#E3E8F0;color:#3A4660}
+.pill.off{background:#F3D9D6;color:#8A2A20}
 .timer{font-size:.85rem;color:var(--muted)}
 .timer.late{color:var(--accent-dark);font-weight:600}
 .wa{background:#1F8F4E;color:#fff}

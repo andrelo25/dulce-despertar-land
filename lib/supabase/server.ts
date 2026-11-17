@@ -12,7 +12,10 @@ export async function createClient() {
         getAll: () => cookieStore.getAll(),
         setAll(items) {
           try {
-            for (const { name, value, options } of items) cookieStore.set(name, value, options);
+            // No hay cliente Supabase en el navegador: la sesión puede ser httpOnly (C18).
+            for (const { name, value, options } of items) {
+              cookieStore.set(name, value, { ...options, httpOnly: true });
+            }
           } catch {
             // Llamado desde un Server Component: la sesión se refresca en proxy.ts.
           }

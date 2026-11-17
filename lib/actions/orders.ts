@@ -1,6 +1,8 @@
 "use server";
 
+import { after } from "next/server";
 import { SHIPPING_FEE } from "../config";
+import { notifyAdminsNewOrder } from "../email";
 import { parseOrderInput, type FieldErrors } from "../domain/order-schema";
 import { slotStart } from "../domain/slots";
 import { createSecretClient } from "../supabase/secret";
@@ -105,6 +107,22 @@ export async function submitOrder(
     const response = rpcData as RpcCreateOrderResponse;
 
     if (response.ok) {
+      const orderId = Number(response.id);
+      after(() =>
+        notifyAdminsNewOrder({
+          id: orderId,
+          customerName: data.name,
+          customerPhone: data.phone,
+          deliveryType: data.deliveryType,
+          address: data.deliveryType === "domicilio" ? data.address : null,
+          deliveryDate: data.date,
+          deliverySlot: data.slot,
+          note: data.note,
+          subtotal: response.subtotal,
+          shippingFee: response.shipping_fee,
+          total: response.total,
+        }),
+      );
       return {
         ok: true,
         order: {

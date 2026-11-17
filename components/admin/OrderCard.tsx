@@ -63,7 +63,7 @@ export function OrderCard({ order: o }: { order: AdminOrder }) {
         {o.status === "pendiente" ? (
           <OrderCountdown createdAt={o.createdAt} />
         ) : (
-          <span className="timer">{o.status === "confirmado" ? "Confirmado y enviado" : status.label}</span>
+          <span className="timer">{status.label}</span>
         )}
       </div>
       <div style={{ textAlign: "right" }}>

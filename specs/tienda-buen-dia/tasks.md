@@ -21,7 +21,7 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
 
 - [x] **T3. Reglas de dominio**
   - Depende de: T1.
-  - Hacer: `lib/domain/` con `money.ts` (formato `es-AR`), `phone.ts`, `slots.ts`, `pricing.ts`, `messages.ts` (textos de WhatsApp), según plan §4.5.
+  - Hacer: `lib/domain/` con `money.ts` (formato `es-AR`), `phone.ts`, `slots.ts`, `pricing.ts`, `messages.ts` (texto del correo al admin), según plan §4.5.
   - Done (C7, C12, C13): pruebas `vitest` pasan para: `351-3445566` y `385-4332211` válidos; `0351…`, `15…`, `+54…`, 9 y 11 dígitos inválidos; `toWhatsappId('351-3445566')` = `5493513445566`; con ahora = lunes 20:00 la primera franja elegible es martes 08:00–09:00; exactamente 12 h válido y 11 h 59 min inválido; `computeTotals` domicilio = subtotal + 3000 y retiro = subtotal.
 
 - [x] **T4. Esquema de validación del pedido**
@@ -70,17 +70,15 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
   - Hacer: pasos Datos y Confirmado de la referencia (líneas 357–405) conectados con `useActionState`; campo oculto de honeypot; franjas deshabilitadas según la regla de 12 h (cálculo en cliente tras montar); pantalla final con id de pedido, resumen, envío, medios de pago (efectivo al retirar o transferencia al alias `BUENDIA.DESAYUNOS`) y aviso de 30 min; vaciar el carrito al confirmar.
   - Done (C10–C15): flujo completo en navegador: errores por campo visibles; domicilio pide dirección y retiro muestra la dirección del local; pedido válido queda `pendiente` en la base, el carrito se vacía y se ve el id; no hay ninguna pantalla de registro.
 
-## Bloque F: WhatsApp
+## Bloque F: Avisos
 
-- [ ] **T12. Módulo WhatsApp y registro de envíos**
-  - Depende de: T3, T5.
-  - Hacer: `lib/whatsapp.ts` (plan §4.8): envío de plantillas con timeout, registro en `whatsapp_messages`, enmascarado de teléfonos en logs; documentar los textos de las tres plantillas en el `README`.
-  - Done (C17, C21–C23 parcial): pruebas con `fetch` simulado pasan para éxito, error HTTP 4xx/5xx y timeout (en los dos últimos queda fila `failed` con código y sin lanzar excepción); ningún log contiene el token ni un teléfono completo.
+- [~] **T12. ~~Módulo WhatsApp y registro de envíos~~ — DESCARTADA**
+  - Motivo: los mensajes automáticos al cliente tienen costo. El administrador le escribe a mano desde su WhatsApp usando el enlace `wa.me` del correo (T13). Se retomará solo si el volumen de pedidos supera su capacidad de respuesta; en ese caso, el diseño original está en el historial de git de `plan.md` §4.8.
 
-- [ ] **T13. Aviso de pedido nuevo al administrador**
-  - Depende de: T10, T12.
-  - Hacer: en `submitOrder`, `after()` que envía `pedido_nuevo_admin` a `ADMIN_WHATSAPP`.
-  - Done (C17): al crear un pedido la respuesta al cliente no espera al envío; el administrador recibe el mensaje (número de prueba de Meta) o queda una fila `failed` si la plantilla aún no está aprobada, y el pedido existe en ambos casos.
+- [x] **T13. Aviso de pedido nuevo a los administradores por correo**
+  - Depende de: T10.
+  - Hacer: `lib/email.ts` (Resend vía `fetch`, timeout 8 s; destinatarios = usuarios con `app_metadata.role='admin'` leídos con `auth.admin.listUsers`); `buildAdminEmail` en `lib/domain/messages.ts` (texto + HTML, con el número del cliente como enlace `https://wa.me/549…`); en `submitOrder`, `after()` que envía el correo. Variables `RESEND_API_KEY` y `EMAIL_FROM`.
+  - Done (C17): al crear un pedido la respuesta al cliente no espera al envío; los administradores reciben un correo con el detalle y el enlace `wa.me` al cliente (los datos del cliente van escapados en el HTML); si el envío falla solo se registra el error (sin clave ni correos) y el pedido existe igual. Pruebas con dependencias simuladas pasan.
 
 ## Bloque G: Administración
 
@@ -94,10 +92,10 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
   - Hacer: `app/admin/page.tsx` con estadísticas y lista (estilos `.stats`, `.order`, `.pill`, `.timer` de la referencia), `OrderCountdown`, mensajes personalizados por unidad, refresco cada 30 s, filtro por estado.
   - Done (C20, C25): un pedido de prueba muestra todos los campos del criterio 20, incluidos los mensajes por unidad; el contador pasa de "Quedan X min" a "Demorado X min" pasados 30 minutos; la lista se actualiza sola al entrar un pedido nuevo.
 
-- [ ] **T16. Confirmar, cancelar, entregar y reintentar**
-  - Depende de: T12, T15.
-  - Hacer: acciones `confirmOrder`, `cancelOrder`, `markDelivered`, `retryWhatsapp` con transiciones atómicas (`where status=…`), botones en `OrderCard` y estado del último WhatsApp visible.
-  - Done (C21–C25): confirmar un pendiente lo pasa a `confirmado` y envía la plantilla con ítems, total, entrega, fecha/horario y medios de pago; cancelar envía la disculpa; con la plantilla no aprobada el pedido igual cambia de estado, se ve "WhatsApp falló" y "Reintentar" funciona; confirmar dos veces seguidas envía un solo mensaje; entregar un `pendiente` o cancelar un `confirmado` es rechazado.
+- [ ] **T16. Confirmar, cancelar y entregar**
+  - Depende de: T15.
+  - Hacer: acciones `confirmOrder`, `cancelOrder`, `markDelivered` con transiciones atómicas (`where status=…`) y botones en `OrderCard`. Sin envío de mensajes.
+  - Done (C21, C22, C24): confirmar un pendiente lo pasa a `confirmado` y cancelar a `cancelado`, sin enviar ningún mensaje; confirmar o cancelar dos veces seguidas solo aplica la primera; entregar un `pendiente` o cancelar un `confirmado` es rechazado.
 
 - [ ] **T17. Gestión de productos**
   - Depende de: T14, T7.
@@ -108,7 +106,7 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
 
 - [ ] **T18. Verificación final**
   - Depende de: T1–T17.
-  - Hacer: recorrer cada criterio C1–C29 con la tabla del plan §5 y anotar la observación; revisar responsive y teclado; buscar `sb_secret_`, `SUPABASE_SECRET_KEY` y el token de Meta en `.next/static` (0 resultados); completar `README` (variables, Supabase, admin, Meta, plantillas, despliegue).
+  - Hacer: recorrer cada criterio C1–C29 con la tabla del plan §5 y anotar la observación; revisar responsive y teclado; buscar `sb_secret_`, `SUPABASE_SECRET_KEY` y `RESEND_API_KEY` en `.next/static` (0 resultados); completar `README` (variables, Supabase, admin, Resend, despliegue).
   - Done: tabla criterio → observación completa y sin fallos en `specs/tienda-buen-dia/verify.md`; `npm test`, `npm run lint` y `npm run build` sin errores.
 
 ## Orden y dependencias
@@ -119,13 +117,13 @@ T1 → T3 → T4
 T1 → T5 → T6
 T2,T6 → T7 → T8 → T9
 T4,T5,T6 → T10;  T9,T10 → T11
-T3,T5 → T12;  T10,T12 → T13
-T6 → T14;  T11,T14 → T15;  T12,T15 → T16;  T14,T7 → T17
-T1–T17 → T18
+T10 → T13  (T12 descartada)
+T6 → T14;  T11,T14 → T15;  T15 → T16;  T14,T7 → T17
+T1–T17 (salvo T12) → T18
 ```
 
 ## Datos que debe aportar el usuario
 
 - **Antes de T5:** proyecto Supabase (URL base, publishable key, secret key) y el correo y clave del primer administrador.
-- **Antes de T12 y T13:** cuenta Meta Business con WhatsApp Cloud API (token, id del número), `ADMIN_WHATSAPP` y las tres plantillas aprobadas (textos en el `README` tras T12).
+- **Antes de probar T13:** `RESEND_API_KEY` y `EMAIL_FROM` (remitente con dominio verificado en Resend) en `.env.local`.
 - **Antes de T11:** dirección real del local (hasta entonces se usa un texto provisional).

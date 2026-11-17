@@ -6,7 +6,7 @@ El plan técnico previo (`dulce-despertar-plan.md`) es insumo de la fase PLAN y 
 
 ## Goal
 
-Que un cliente pueda armar y enviar un pedido de cajas de desayuno, tortas y dulces sin registrarse, y que el administrador lo confirme en menos de 30 minutos y le envíe el detalle por WhatsApp para pagar.
+Que un cliente pueda armar y enviar un pedido de cajas de desayuno, tortas y dulces sin registrarse, y que el administrador lo confirme en menos de 30 minutos y le envíe el detalle por WhatsApp (manualmente, desde su propio WhatsApp) para pagar.
 
 ## Actores
 
@@ -38,10 +38,10 @@ Que un cliente pueda armar y enviar un pedido de cajas de desayuno, tortas y dul
 4. Confirma. Ve una pantalla con número de pedido, resumen, medios de pago y el aviso de que recibirá confirmación por WhatsApp en menos de 30 minutos.
 
 ### F3. Administrador: confirmar o rechazar pedido
-1. Es avisado por WhatsApp de cada pedido nuevo.
+1. Es avisado por correo electrónico de cada pedido nuevo (a todos los administradores). En el correo, el número de WhatsApp del cliente es un enlace que abre el chat con el cliente.
 2. Ingresa al panel, ve pedidos con estado y tiempo restante de los 30 minutos.
-3. Evalúa si llega con la fecha y hora solicitadas. Si llega, lo confirma y el cliente recibe por WhatsApp el detalle y cómo pagar.
-4. Si no llega, lo cancela y el cliente recibe por WhatsApp un mensaje de disculpas por no poder cumplir con su pedido.
+3. Evalúa si llega con la fecha y hora solicitadas. Si llega, lo confirma en el panel y le escribe al cliente por WhatsApp, a mano, con el detalle y cómo pagar.
+4. Si no llega, lo cancela en el panel y le escribe al cliente por WhatsApp, a mano, para disculparse por no poder cumplir con su pedido.
 5. Un pedido confirmado puede marcarse luego como entregado.
 
 ### F4. Administrador: gestionar productos
@@ -73,15 +73,15 @@ Que un cliente pueda armar y enviar un pedido de cajas de desayuno, tortas y dul
 14. Cuando el cliente confirma un pedido válido, entonces el pedido queda registrado como pendiente, el carrito se vacía y el cliente ve su número de pedido, el resumen y los medios de pago.
 15. El cliente nunca necesita crear cuenta ni contraseña.
 16. Si entre armar el carrito y confirmar un producto pasó a no disponible o baja, entonces el pedido se rechaza indicando qué producto quitar.
-17. Cuando entra un pedido nuevo, entonces el administrador recibe un aviso por WhatsApp.
+17. Cuando entra un pedido nuevo, entonces todos los administradores reciben un correo con el detalle (número, cliente, ítems, total, entrega, fecha y horario) y el número de WhatsApp del cliente como enlace `wa.me` para responderle. Si el correo falla, el pedido se conserva igual y el error queda registrado.
 
 **Administración de pedidos**
 18. Solo un administrador autenticado accede al panel; cualquier otra persona no ve pedidos ni datos de clientes.
 19. La página pública no muestra enlaces, botones ni textos que revelen la existencia del panel de administración.
 20. El panel muestra para cada pedido: cliente, WhatsApp, ítems con sus mensajes personalizados, envío, total, forma de entrega, dirección, fecha, horario, nota, estado y tiempo restante o demora respecto de los 30 minutos.
-21. Cuando el administrador confirma un pedido, entonces el estado pasa a confirmado y el cliente recibe por WhatsApp el detalle (ítems, total, entrega, fecha y horario) y cómo pagar (efectivo al retirar o transferencia al alias).
-22. Cuando el administrador cancela un pedido, entonces el estado pasa a cancelado y el cliente recibe por WhatsApp un mensaje de disculpas por no llegar con su pedido.
-23. Si el envío de un WhatsApp (confirmación o cancelación) falla, entonces el administrador lo ve y puede reintentar; el pedido no se pierde.
+21. Cuando el administrador confirma un pedido, entonces el estado pasa a confirmado. No se envía ningún mensaje automático al cliente; el administrador le escribe a mano por WhatsApp.
+22. Cuando el administrador cancela un pedido, entonces el estado pasa a cancelado. No se envía ningún mensaje automático al cliente; el administrador le escribe a mano por WhatsApp.
+23. *(Descartado: era el reintento de WhatsApp automático.)*
 24. El administrador puede marcar un pedido confirmado como entregado.
 25. Si pasan 30 minutos sin confirmar, el cliente no ve ningún cambio y el panel marca la demora; no se envía ningún recordatorio adicional.
 
@@ -97,6 +97,7 @@ Que un cliente pueda armar y enviar un pedido de cajas de desayuno, tortas y dul
 
 - Registro, login o historial de clientes.
 - Pago en línea dentro de la página (el pago se coordina por WhatsApp).
+- Mensajes automáticos al cliente (WhatsApp Cloud API o correo): tienen costo; se reevaluará si el volumen de pedidos supera la capacidad de respuesta manual del administrador.
 - Seguimiento del estado del pedido por parte del cliente en la web.
 - Control de stock por cantidad.
 - Horarios, datos del local, costo de envío y alias de pago editables desde el panel (son fijos).
@@ -109,7 +110,7 @@ Que un cliente pueda armar y enviar un pedido de cajas de desayuno, tortas y dul
 ## Decisiones ya tomadas
 
 - Un solo sitio con base de datos hospedada (Supabase); el administrador entra con email y clave.
-- Confirmación, cancelación al cliente y aviso al administrador: automáticos por WhatsApp; sin email.
+- Sin mensajes automáticos al cliente (costo): la confirmación y la cancelación las comunica el administrador a mano por WhatsApp. Aviso de pedido nuevo al administrador: por correo (Resend) con enlace `wa.me` al cliente; destinatarios = usuarios de Supabase Auth con `app_metadata.role = 'admin'`.
 - Estados de pedido: pendiente → confirmado → entregado, o pendiente → cancelado.
 - Estados de producto: activo / no disponible / baja.
 

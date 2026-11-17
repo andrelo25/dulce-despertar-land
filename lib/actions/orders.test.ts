@@ -2,6 +2,11 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { submitOrder } from "./orders";
 
 const mockRpc = vi.fn();
+const mockNotify = vi.fn();
+const mockAfter = vi.fn((cb: () => unknown) => void cb());
+
+vi.mock("next/server", () => ({ after: (cb: () => unknown) => mockAfter(cb) }));
+vi.mock("../email", () => ({ notifyAdminsNewOrder: (i: unknown) => mockNotify(i) }));
 
 vi.mock("../supabase/secret", () => ({
   createSecretClient: () => ({
@@ -104,6 +109,19 @@ describe("submitOrder action", () => {
       },
     });
 
+    expect(mockNotify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 1005,
+        customerName: "Ana Pérez",
+        customerPhone: "3513445566",
+        deliveryType: "domicilio",
+        address: "Av. Colón 1234",
+        deliverySlot: "08:00-09:00",
+        note: "Dejar en recepción",
+        total: 67000,
+      }),
+    );
+
     expect(mockRpc).toHaveBeenCalledWith("create_order", {
       p_name: "Ana Pérez",
       p_phone: "3513445566",
@@ -146,6 +164,14 @@ describe("submitOrder action", () => {
         p_address: null,
       }),
     );
+  });
+
+  it("no envía correo si el pedido no se creó", async () => {
+    mockRpc.mockResolvedValueOnce({ data: { ok: false, error: "rate_limit" }, error: null });
+
+    await submitOrder(null, createFormData());
+
+    expect(mockNotify).not.toHaveBeenCalled();
   });
 
   it("maneja respuesta 'unavailable' de la RPC devolviendo los nombres no disponibles", async () => {

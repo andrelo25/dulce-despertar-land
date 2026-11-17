@@ -1,14 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  adminNewOrderParams,
-  cancelledParams,
-  confirmedParams,
-  formatDateLabel,
-  formatSlotLabel,
-  oneLine,
-  summarizeItems,
-  type OrderSummary,
-} from "./messages";
+import { buildAdminEmail, formatDateLabel, formatSlotLabel, oneLine, type OrderSummary } from "./messages";
 import { STORE } from "../config";
 
 const order: OrderSummary = {
@@ -41,54 +32,74 @@ describe("formatDateLabel / formatSlotLabel", () => {
   });
 });
 
-describe("summarizeItems", () => {
-  it("una sola línea con · y marca los mensajes personalizados", () => {
-    const s = summarizeItems(order.items);
-    expect(s).toBe(
-      "2 × Caja Cumpleaños ($37.000, con mensaje personalizado) · 1 × Alfajores artesanales ($3.200)",
+describe("buildAdminEmail", () => {
+  it("asunto en una línea y cuerpo con pedido, cliente, enlace de WhatsApp, ítems, mensajes y totales", () => {
+    const { subject, text } = buildAdminEmail({ ...order, note: "Dejar en recepción" });
+    expect(subject).toBe("Nuevo pedido #1001 — Ana Pérez — $43.200");
+    expect(text).toBe(
+      [
+        "Nuevo pedido #1001",
+        "",
+        "Cliente: Ana Pérez (WhatsApp 3513445566)",
+        "Responder por WhatsApp: https://wa.me/5493513445566",
+        "Entrega: Envío a domicilio (Av. Colón 123, Córdoba), $3.000 de envío incluido",
+        "Fecha y horario: 17/11/2026, 08:00 a 09:00",
+        "",
+        "Ítems:",
+        "- 2 × Caja Cumpleaños — $37.000",
+        "    Mensaje 1: Feliz cumple Ana",
+        "- 1 × Alfajores artesanales — $3.200",
+        "",
+        "Subtotal: $40.200",
+        "Envío: $3.000",
+        "Total: $43.200",
+        "",
+        "Nota: Dejar en recepción",
+      ].join("\n"),
     );
-    expect(s).not.toMatch(/[\n\t]/);
-  });
-});
-
-describe("parámetros de plantilla", () => {
-  it("confirmado: orden fijo, sin saltos de línea", () => {
-    const p = confirmedParams(order);
-    expect(p).toEqual([
-      "Ana Pérez",
-      "1001",
-      "2 × Caja Cumpleaños ($37.000, con mensaje personalizado) · 1 × Alfajores artesanales ($3.200)",
-      "$43.200",
-      "Envío a domicilio (Av. Colón 123, Córdoba), $3.000 de envío incluido",
-      "17/11/2026, 08:00 a 09:00",
-      "BUENDIA.DESAYUNOS",
-    ]);
-    for (const v of p) expect(v).not.toMatch(/[\n\t]/);
   });
 
-  it("confirmado con retiro indica el local y no menciona envío", () => {
-    const p = confirmedParams({ ...order, deliveryType: "retiro", address: null, shippingFee: 0, total: 40200 });
-    expect(p[4]).toBe(`Retiro en el local (${STORE.address})`);
-    expect(p[3]).toBe("$40.200");
+  it("html: el número y la URL son enlaces wa.me con el id internacional (549 + 10 dígitos)", () => {
+    const { html } = buildAdminEmail(order);
+    const link = "https://wa.me/5493513445566";
+    expect(html).toContain(`<a href="${link}">WhatsApp 3513445566</a>`);
+    expect(html).toContain(`<a href="${link}">${link}</a>`);
+    expect((html.match(/<a /g) ?? []).length).toBe(2);
   });
 
-  it("cancelado: nombre y número de pedido", () => {
-    expect(cancelledParams(order)).toEqual(["Ana Pérez", "1001"]);
+  it("html: escapa datos del cliente y no permite inyectar etiquetas ni enlaces", () => {
+    const { html } = buildAdminEmail({
+      ...order,
+      customerName: '<script>alert("x")</script>',
+      address: '<a href="https://evil.test">click</a>',
+      items: [{ name: "<b>Caja</b>", qty: 1, unitPrice: 1000, messages: ["<img src=x onerror=alert(1)>"] }],
+      note: "<i>nota</i>",
+    });
+    expect(html).not.toMatch(/<script|<b>|<i>|<img/);
+    expect(html).not.toContain("evil.test\">");
+    expect(html).toContain("&lt;script&gt;");
+    expect((html.match(/<a /g) ?? []).length).toBe(2);
   });
 
-  it("aviso al admin: pedido, cliente, teléfono, total y entrega", () => {
-    expect(adminNewOrderParams(order)).toEqual([
-      "1001",
-      "Ana Pérez",
-      "3513445566",
-      "$43.200",
-      "Envío a domicilio, 17/11/2026, 08:00 a 09:00",
-    ]);
+  it("sin teléfono válido no hay enlace, pero el correo igual se arma", () => {
+    const { text, html } = buildAdminEmail({ ...order, customerPhone: "123" });
+    expect(text).not.toContain("wa.me");
+    expect(html).not.toContain("<a ");
+    expect(text).toContain("Cliente: Ana Pérez (WhatsApp 123)");
   });
 
-  it("limpia saltos de línea de datos cargados por el cliente", () => {
-    const p = confirmedParams({ ...order, customerName: "Ana\nPérez", address: "Calle 1\n\nPiso 2" });
-    expect(p[0]).toBe("Ana Pérez");
-    expect(p[4]).toContain("Calle 1 Piso 2");
+  it("retiro sin envío ni nota; el nombre del cliente no rompe el asunto", () => {
+    const { subject, text } = buildAdminEmail({
+      ...order,
+      customerName: "Ana\nPérez",
+      deliveryType: "retiro",
+      address: null,
+      shippingFee: 0,
+      total: 40200,
+    });
+    expect(subject).not.toMatch(/[\n\r]/);
+    expect(text).toContain(`Entrega: Retiro en el local (${STORE.address})`);
+    expect(text).not.toContain("Envío: ");
+    expect(text).not.toContain("Nota:");
   });
 });

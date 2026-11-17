@@ -92,7 +92,7 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
   - Hacer: `app/admin/page.tsx` con estadísticas y lista (estilos `.stats`, `.order`, `.pill`, `.timer` de la referencia), `OrderCountdown`, mensajes personalizados por unidad, refresco cada 30 s, filtro por estado.
   - Done (C20, C25): un pedido de prueba muestra todos los campos del criterio 20, incluidos los mensajes por unidad; el contador pasa de "Quedan X min" a "Demorado X min" pasados 30 minutos; la lista se actualiza sola al entrar un pedido nuevo.
 
-- [ ] **T16. Confirmar, cancelar y entregar**
+- [x] **T16. Confirmar, cancelar y entregar**
   - Depende de: T15.
   - Hacer: acciones `confirmOrder`, `cancelOrder`, `markDelivered` con transiciones atómicas (`where status=…`) y botones en `OrderCard`. Sin envío de mensajes.
   - Done (C21, C22, C24): confirmar un pendiente lo pasa a `confirmado` y cancelar a `cancelado`, sin enviar ningún mensaje; confirmar o cancelar dos veces seguidas solo aplica la primera; entregar un `pendiente` o cancelar un `confirmado` es rechazado.

@@ -2,6 +2,7 @@ import { formatMoney } from "@/lib/domain/money";
 import { formatDateLabel, formatSlotLabel } from "@/lib/domain/messages";
 import { personalizedMessages, type AdminOrder, type OrderStatus } from "@/lib/domain/orders";
 import { artDateString } from "@/lib/domain/slots";
+import { OrderActions } from "./OrderActions";
 import { OrderCountdown } from "./OrderCountdown";
 
 const STATUS: Record<OrderStatus, { label: string; cls: string }> = {
@@ -65,6 +66,7 @@ export function OrderCard({ order: o }: { order: AdminOrder }) {
         ) : (
           <span className="timer">{status.label}</span>
         )}
+        <OrderActions id={o.id} status={o.status} />
       </div>
       <div style={{ textAlign: "right" }}>
         <div className="price">{formatMoney(o.total)}</div>

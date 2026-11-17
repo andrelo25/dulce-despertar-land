@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { confirmCountdown, orderStats, personalizedMessages, type AdminOrder } from "./orders";
+import { confirmCountdown, historyStart, orderStats, paginate, personalizedMessages, type AdminOrder } from "./orders";
 
 const T0 = Date.parse("2026-11-16T12:00:00-03:00");
 const min = (n: number) => T0 + n * 60000;
@@ -46,6 +46,13 @@ describe("orderStats", () => {
     const s = orderStats([order({}), order({ status: "confirmado" }), order({ status: "entregado" })], now);
     expect(s).toMatchObject({ pending: 1, confirmed: 1 });
   });
+  it("cuenta entregados y cancelados", () => {
+    const s = orderStats(
+      [order({ status: "entregado" }), order({ status: "entregado" }), order({ status: "cancelado" }), order({})],
+      now,
+    );
+    expect(s).toMatchObject({ pending: 1, confirmed: 0, delivered: 2, cancelled: 1 });
+  });
   it("el total del día excluye cancelados y pedidos de otro día", () => {
     const s = orderStats(
       [
@@ -57,6 +64,31 @@ describe("orderStats", () => {
       now,
     );
     expect(s.todayTotal).toBe(1300);
+  });
+});
+
+describe("historyStart", () => {
+  it("es la medianoche argentina de hace 6 días (hoy + 6 anteriores = 7 días)", () => {
+    expect(historyStart(new Date("2026-11-16T20:00:00-03:00"))).toBe("2026-11-10T03:00:00.000Z");
+  });
+  it("usa la fecha argentina, no la UTC (23:30 ART ya es el día siguiente en UTC)", () => {
+    expect(historyStart(new Date("2026-11-16T23:30:00-03:00"))).toBe("2026-11-10T03:00:00.000Z");
+  });
+});
+
+describe("paginate", () => {
+  const list = Array.from({ length: 23 }, (_, i) => i + 1);
+  it("devuelve 10 por página", () => {
+    expect(paginate(list, 1)).toMatchObject({ page: 1, pages: 3, items: list.slice(0, 10) });
+    expect(paginate(list, 3).items).toEqual([21, 22, 23]);
+  });
+  it("ajusta páginas fuera de rango", () => {
+    expect(paginate(list, 99).page).toBe(3);
+    expect(paginate(list, 0).page).toBe(1);
+    expect(paginate(list, Number.NaN).page).toBe(1);
+  });
+  it("lista vacía: una página sin ítems", () => {
+    expect(paginate([], 1)).toEqual({ items: [], page: 1, pages: 1 });
   });
 });
 

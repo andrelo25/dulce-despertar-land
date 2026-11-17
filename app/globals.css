@@ -151,11 +151,12 @@ fieldset{border:0;padding:0;margin:0 0 14px}
 /* Admin (se usa desde T14; sin los interruptores de demo de la referencia) */
 .admin{padding:40px 0 60px}
 .admin h1{font-family:var(--serif);margin:0 0 4px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+.pager{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:18px}
 .stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}
 .stat b{display:block;font-family:var(--serif);font-size:1.8rem}
 .orders{display:grid;gap:14px}
-.order{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:grid;grid-template-columns:1.2fr 1fr auto;gap:18px;align-items:start}
+.order{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 150px;gap:18px;align-items:start}
 .order h3{margin:0;font-family:var(--serif)}
 .order ul{margin:6px 0 0;padding-left:18px;font-size:.92rem}
 .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:700}
@@ -167,7 +168,7 @@ fieldset{border:0;padding:0;margin:0 0 14px}
 .timer.late{color:var(--accent-dark);font-weight:600}
 .wa{background:#1F8F4E;color:#fff}
 .wa:hover{background:#18763F}
-@media (max-width:760px){.order{grid-template-columns:1fr}.stats{grid-template-columns:1fr}}
+@media (max-width:760px){.order{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
 
 .toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,120px);background:var(--cocoa);color:var(--cream);padding:12px 18px;border-radius:999px;z-index:60;transition:transform .25s;font-weight:500}
 .toast.show{transform:translate(-50%,0)}

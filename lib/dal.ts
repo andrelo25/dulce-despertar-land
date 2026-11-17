@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import type { AdminOrder, OrderStatus } from "./domain/orders";
+import { historyStart, type AdminOrder, type OrderStatus } from "./domain/orders";
 import type { DeliveryType } from "./domain/pricing";
 import { createClient } from "./supabase/server";
 
@@ -46,7 +46,7 @@ type OrderRow = {
 
 const ORDERS_LIMIT = 200;
 
-/** Pedidos más recientes con sus ítems. Corre con la sesión del admin: RLS sigue vigente. */
+/** Pedidos de los últimos 7 días con sus ítems. Corre con la sesión del admin: RLS sigue vigente. */
 export async function getOrders(): Promise<AdminOrder[]> {
   await verifyAdmin();
   const supabase = await createClient();
@@ -55,6 +55,7 @@ export async function getOrders(): Promise<AdminOrder[]> {
     .select(
       "id, customer_name, customer_phone, delivery_type, address, delivery_at, delivery_slot, note, subtotal, shipping_fee, total, status, created_at, order_items(id, product_name, qty, unit_price, messages)",
     )
+    .gte("created_at", historyStart(new Date()))
     .order("created_at", { ascending: false })
     .order("id", { referencedTable: "order_items", ascending: true })
     .limit(ORDERS_LIMIT)

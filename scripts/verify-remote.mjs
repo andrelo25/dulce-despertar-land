@@ -24,7 +24,7 @@ const call = async (key, path, { method = "GET", body, token } = {}) => {
 
 console.log("anon (publishable key)");
 let r = await call(pub, "/rest/v1/products?select=name,status&order=sort_order");
-ok(r.status === 200 && r.json.length === 11, "lee los 11 productos activos", JSON.stringify(r.json).slice(0, 120));
+ok(r.status === 200 && r.json.length >= 11 && r.json.every((p) => p.status !== "hidden"), `lee los productos visibles (${r.json.length}), ninguno hidden`, JSON.stringify(r.json).slice(0, 120));
 r = await call(pub, "/rest/v1/orders?select=*");
 ok(r.status === 401 || r.status === 403, `NO lee orders (HTTP ${r.status})`, JSON.stringify(r.json).slice(0, 120));
 r = await call(pub, "/rest/v1/order_items?select=*");
@@ -37,6 +37,7 @@ r = await call(pub, "/rest/v1/rpc/create_order", { method: "POST", body: { p_nam
 ok(r.status === 401 || r.status === 403 || r.status === 404, `NO ejecuta create_order (HTTP ${r.status})`);
 
 console.log("secret key (service_role)");
+const ordersBefore = (await call(sec, "/rest/v1/orders?select=id")).json.length;
 const prods = (await call(sec, "/rest/v1/products?select=id,name,price,section,status")).json;
 const by = Object.fromEntries(prods.map((p) => [p.name, p]));
 const at = new Date(Date.now() + 40 * 3600e3).toISOString();
@@ -70,7 +71,7 @@ for (const id of [orderId, o2.id].filter(Boolean)) {
   ok(d.status === 200 || d.status === 204, `pedido de prueba #${id} eliminado`, String(d.status));
 }
 const left = (await call(sec, "/rest/v1/orders?select=id")).json;
-ok(Array.isArray(left) && left.length === 0, "no quedan pedidos en la base");
+ok(Array.isArray(left) && left.length === ordersBefore, "los pedidos existentes quedaron intactos");
 
 console.log(`\n${pass} correctas, ${fail} fallidas`);
 process.exit(fail ? 1 : 0);

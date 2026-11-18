@@ -78,7 +78,7 @@ describe("notifyAdminsNewOrder", () => {
     expect(body.text).toContain("2 × Caja Cumpleaños — $37.000");
     expect(body.text).toContain("Mensaje 1: Feliz cumple");
     expect(body.text).toContain("https://wa.me/5493513445566");
-    expect(body.html).toContain('<a href="https://wa.me/5493513445566">WhatsApp 3513445566</a>');
+    expect(body.html).toContain('<a href="https://wa.me/5493513445566">https://wa.me/5493513445566</a>');
   });
 
   it("no lanza ni loguea secretos cuando Resend responde error HTTP", async () => {

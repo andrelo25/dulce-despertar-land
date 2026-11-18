@@ -64,11 +64,11 @@ export function buildAdminEmail(o: OrderSummary & { note?: string | null }): {
 } {
   const waId = toWhatsappId(o.customerPhone);
   const waUrl = waId ? `https://wa.me/${waId}` : null;
-  const client = `(WhatsApp ${o.customerPhone})`;
   const lines = [
     `Nuevo pedido #${o.id}`,
     "",
-    `Cliente: ${oneLine(o.customerName)} ${client}`,
+    // Con enlace válido el número ya va en él; sin enlace se muestra tal cual para no perder el dato.
+    `Cliente: ${oneLine(o.customerName)}${waUrl ? "" : ` (WhatsApp ${o.customerPhone})`}`,
     ...(waUrl ? [`Responder por WhatsApp: ${waUrl}`] : []),
     `Entrega: ${deliveryText(o)}`,
     `Fecha y horario: ${whenText(o)}`,
@@ -86,13 +86,10 @@ export function buildAdminEmail(o: OrderSummary & { note?: string | null }): {
   lines.push(`Total: ${formatMoney(o.total)}`);
   if (o.note?.trim()) lines.push("", `Nota: ${oneLine(o.note)}`);
   const text = lines.join("\n");
-  // Se escapa todo y recién después se insertan los enlaces: teléfono y URL son solo dígitos validados.
-  // Cada reemplazo apunta a un texto que aparece una sola vez (no a la URL suelta, que ya queda en un href).
+  // Se escapa todo y recién después se inserta el enlace: la URL es solo dígitos validados.
   let body = escapeHtml(text);
   if (waUrl) {
-    body = body
-      .replace(`Responder por WhatsApp: ${waUrl}`, `Responder por WhatsApp: <a href="${waUrl}">${waUrl}</a>`)
-      .replace(client, `(<a href="${waUrl}">WhatsApp ${o.customerPhone}</a>)`);
+    body = body.replace(`Responder por WhatsApp: ${waUrl}`, `Responder por WhatsApp: <a href="${waUrl}">${waUrl}</a>`);
   }
   return {
     subject: `Nuevo pedido #${o.id} — ${oneLine(o.customerName)} — ${formatMoney(o.total)}`,

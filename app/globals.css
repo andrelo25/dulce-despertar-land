@@ -93,7 +93,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .d-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
 .d-head h2{margin:0;font-family:var(--serif);font-size:1.5rem}
 .x{background:var(--paper);border:1px solid var(--line);border-radius:50%;width:38px;height:38px;font-size:1.2rem}
-.d-body{flex:1;overflow:auto;padding:16px 20px}
+.drawer>form{flex:1;min-height:0;display:flex;flex-direction:column}
+.d-body{flex:1;min-height:0;overflow:auto;padding:16px 20px}
 .d-foot{border-top:1px solid var(--line);padding:16px 20px;background:var(--paper)}
 .progress{display:flex;gap:6px;padding:0 20px 14px;font-size:.8rem;color:var(--muted)}
 .progress span{flex:1;border-top:3px solid var(--line);padding-top:6px}

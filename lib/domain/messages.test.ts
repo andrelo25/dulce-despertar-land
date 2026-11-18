@@ -40,7 +40,7 @@ describe("buildAdminEmail", () => {
       [
         "Nuevo pedido #1001",
         "",
-        "Cliente: Ana Pérez (WhatsApp 3513445566)",
+        "Cliente: Ana Pérez",
         "Responder por WhatsApp: https://wa.me/5493513445566",
         "Entrega: Envío a domicilio (Av. Colón 123, Córdoba), $3.000 de envío incluido",
         "Fecha y horario: 17/11/2026, 08:00 a 09:00",
@@ -59,12 +59,12 @@ describe("buildAdminEmail", () => {
     );
   });
 
-  it("html: el número y la URL son enlaces wa.me con el id internacional (549 + 10 dígitos)", () => {
+  it("html: un único enlace wa.me con el id internacional (549 + 10 dígitos)", () => {
     const { html } = buildAdminEmail(order);
     const link = "https://wa.me/5493513445566";
-    expect(html).toContain(`<a href="${link}">WhatsApp 3513445566</a>`);
-    expect(html).toContain(`<a href="${link}">${link}</a>`);
-    expect((html.match(/<a /g) ?? []).length).toBe(2);
+    expect(html).toContain(`Responder por WhatsApp: <a href="${link}">${link}</a>`);
+    expect(html).not.toContain("(WhatsApp");
+    expect((html.match(/<a /g) ?? []).length).toBe(1);
   });
 
   it("html: escapa datos del cliente y no permite inyectar etiquetas ni enlaces", () => {
@@ -78,7 +78,7 @@ describe("buildAdminEmail", () => {
     expect(html).not.toMatch(/<script|<b>|<i>|<img/);
     expect(html).not.toContain("evil.test\">");
     expect(html).toContain("&lt;script&gt;");
-    expect((html.match(/<a /g) ?? []).length).toBe(2);
+    expect((html.match(/<a /g) ?? []).length).toBe(1);
   });
 
   it("sin teléfono válido no hay enlace, pero el correo igual se arma", () => {

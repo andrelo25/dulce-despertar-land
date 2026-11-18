@@ -10,7 +10,7 @@ export function Header() {
     <header>
       <div className="wrap bar">
         <a href="#inicio" className="logo">
-          <span aria-hidden="true"></span>Dulce Despertar
+          <span aria-hidden="true"></span>Manso Box
         </a>
         <nav aria-label="Secciones">
           <ul>

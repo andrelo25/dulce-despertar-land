@@ -29,7 +29,7 @@ export const SLOTS = [
 export type Slot = (typeof SLOTS)[number];
 
 export const STORE = {
-  name: "Dulce Despertar",
+  name: "Manso Box",
   // NEXT_PUBLIC_ porque la usan componentes de cliente (se fija en el build).
   address: process.env.NEXT_PUBLIC_STORE_ADDRESS || "Dirección del local (a definir)",
   paymentAlias: process.env.NEXT_PUBLIC_PAYMENT_ALIAS || "(alias a definir)",

@@ -1,4 +1,4 @@
-# Dulce Despertar — Tienda online
+# Manso Box — Tienda online
 
 Tienda de desayunos, tortas y dulces con carrito, pedido sin registro de cliente y panel de administración. Next.js 16 (App Router, `cacheComponents`), Supabase (Postgres + Auth + Storage) y Resend para el aviso por correo.
 
@@ -20,7 +20,7 @@ Copiar `.env.example` a `.env.local` (no se versiona) y completar:
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (`sb_publishable_…`), pública | navegador y servidor |
 | `SUPABASE_SECRET_KEY` | Secret key (`sb_secret_…`). **Solo servidor** | `lib/supabase/secret.ts` |
 | `RESEND_API_KEY` | Clave de Resend. **Solo servidor** | `lib/email.ts` |
-| `EMAIL_FROM` | Remitente con dominio verificado, ej. `Dulce Despertar <pedidos@tudominio.com>` | `lib/email.ts` |
+| `EMAIL_FROM` | Remitente con dominio verificado, ej. `Manso Box <pedidos@tudominio.com>` | `lib/email.ts` |
 | `NEXT_PUBLIC_STORE_ADDRESS` | Dirección del local para retiros, ej. `Suipacha 193`. Pública; se fija en el build | `lib/config.ts` |
 | `NEXT_PUBLIC_PAYMENT_ALIAS` | Alias para transferencias, ej. `dulce.despertar.mp`. Público; se fija en el build | `lib/config.ts` |
 | `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | Opcional: solo si se despliega en varias instancias | Next.js |

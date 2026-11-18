@@ -67,7 +67,7 @@ Leyenda de la columna **Estado**:
 ## Hallazgos y desvíos
 
 1. **`scripts/verify-remote.mjs` estaba desactualizado** frente a la base real: esperaba exactamente 11 productos y 0 pedidos al final. La base real tiene 12 productos (se agregó "Torta Clásica de Frutillas y Dulce de Leche" desde el panel en T17) y 17 pedidos de prueba. Se ajustó el script para exigir ≥ 11 productos sin ninguno `hidden` y comprobar que los pedidos existentes quedan intactos. Resultado: 17/17.
-2. **Título de la página**: `tasks.md` T2 decía "Buen Día — Desayunos, Tortas y Dulces"; `app/layout.tsx` usa "Dulce Despertar — Desayunos, Tortas y Dulces". Se asume decisión posterior de marca (el alias de pago sigue siendo `BUENDIA.DESAYUNOS`). Sin impacto funcional.
+2. **Título de la página**: `tasks.md` T2 decía "Buen Día — Desayunos, Tortas y Dulces"; `app/layout.tsx` usa "Manso Box — Desayunos, Tortas y Dulces". Se asume decisión posterior de marca (el alias de pago sigue siendo `BUENDIA.DESAYUNOS`). Sin impacto funcional.
 3. **Dirección del local**: pasó a la variable `NEXT_PUBLIC_STORE_ADDRESS` (fija en build). Definirla en el hosting; si falta se muestra un texto provisional.
 4. **Aviso de build**: Next.js informa que ignoró un `package-lock.json` en `/Users/andresherrera` por estar fuera del repositorio. No afecta al build; se evita con `turbopack.root` en `next.config.ts`.
 

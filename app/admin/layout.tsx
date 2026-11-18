@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Panel — Dulce Despertar",
+  title: "Panel — Manso Box",
   robots: { index: false, follow: false },
 };
 

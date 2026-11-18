@@ -52,7 +52,7 @@ describe("notifyAdminsNewOrder", () => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
     vi.stubEnv("RESEND_API_KEY", "re_test_secret");
-    vi.stubEnv("EMAIL_FROM", "Dulce Despertar <pedidos@example.com>");
+    vi.stubEnv("EMAIL_FROM", "Manso Box <pedidos@example.com>");
     vi.spyOn(console, "error").mockImplementation(() => {});
     mockListUsers.mockResolvedValue(admins);
     mockItems.mockResolvedValue(items);
@@ -73,7 +73,7 @@ describe("notifyAdminsNewOrder", () => {
     expect(init.headers.Authorization).toBe("Bearer re_test_secret");
     const body = JSON.parse(init.body);
     expect(body.to).toEqual(["admin1@example.com", "admin2@example.com"]);
-    expect(body.from).toBe("Dulce Despertar <pedidos@example.com>");
+    expect(body.from).toBe("Manso Box <pedidos@example.com>");
     expect(body.subject).toBe("Nuevo pedido #1001 — Ana Pérez — $40.200");
     expect(body.text).toContain("2 × Caja Cumpleaños — $37.000");
     expect(body.text).toContain("Mensaje 1: Feliz cumple");

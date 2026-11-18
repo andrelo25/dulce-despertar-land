@@ -43,3 +43,5 @@ next-env.d.ts
 
 #resources
 /resources
+# Ignorar solo los archivos .md dentro de .bob
+/.bob

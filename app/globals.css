@@ -93,7 +93,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .d-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
 .d-head h2{margin:0;font-family:var(--serif);font-size:1.5rem}
 .x{background:var(--paper);border:1px solid var(--line);border-radius:50%;width:38px;height:38px;font-size:1.2rem}
-.d-body{flex:1;overflow:auto;padding:16px 20px}
+.drawer>form{flex:1;min-height:0;display:flex;flex-direction:column}
+.d-body{flex:1;min-height:0;overflow:auto;padding:16px 20px}
 .d-foot{border-top:1px solid var(--line);padding:16px 20px;background:var(--paper)}
 .progress{display:flex;gap:6px;padding:0 20px 14px;font-size:.8rem;color:var(--muted)}
 .progress span{flex:1;border-top:3px solid var(--line);padding-top:6px}
@@ -151,21 +152,24 @@ fieldset{border:0;padding:0;margin:0 0 14px}
 /* Admin (se usa desde T14; sin los interruptores de demo de la referencia) */
 .admin{padding:40px 0 60px}
 .admin h1{font-family:var(--serif);margin:0 0 4px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+.pager{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:18px}
 .stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}
 .stat b{display:block;font-family:var(--serif);font-size:1.8rem}
 .orders{display:grid;gap:14px}
-.order{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:grid;grid-template-columns:1.2fr 1fr auto;gap:18px;align-items:start}
+.order{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 150px;gap:18px;align-items:start}
 .order h3{margin:0;font-family:var(--serif)}
 .order ul{margin:6px 0 0;padding-left:18px;font-size:.92rem}
 .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:700}
 .pill.pend{background:#FDE7C9;color:#8A4B10}
 .pill.ok{background:#DDEFD9;color:#2E6A2A}
+.pill.done{background:#E3E8F0;color:#3A4660}
+.pill.off{background:#F3D9D6;color:#8A2A20}
 .timer{font-size:.85rem;color:var(--muted)}
 .timer.late{color:var(--accent-dark);font-weight:600}
 .wa{background:#1F8F4E;color:#fff}
 .wa:hover{background:#18763F}
-@media (max-width:760px){.order{grid-template-columns:1fr}.stats{grid-template-columns:1fr}}
+@media (max-width:760px){.order{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
 
 .toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,120px);background:var(--cocoa);color:var(--cream);padding:12px 18px;border-radius:999px;z-index:60;transition:transform .25s;font-weight:500}
 .toast.show{transform:translate(-50%,0)}

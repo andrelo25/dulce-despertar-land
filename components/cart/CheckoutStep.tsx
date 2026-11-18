@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useState } from "react";
 import { submitOrder, type SubmitOrderResult } from "@/lib/actions/orders";
 import { SHIPPING_FEE, SLOTS, STORE } from "@/lib/config";
 import type { DeliveryType } from "@/lib/domain/pricing";
@@ -126,7 +126,15 @@ export function CheckoutStep({ onBack, onOrderConfirmed }: CheckoutStepProps) {
   const todayStr = now ? artDateString(now) : "";
 
   return (
-    <form action={formAction} noValidate>
+    // ponytail: onSubmit en vez de action={...}: React 19 vacía el formulario tras cada action y se perdían los campos ya completados.
+    <form
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => formAction(data));
+      }}
+    >
       <input type="hidden" name="cart" value={cartJson} />
       {/* Honeypot field for bot protection */}
       <input
@@ -216,7 +224,7 @@ export function CheckoutStep({ onBack, onOrderConfirmed }: CheckoutStepProps) {
               />
               <label htmlFor="o-env">
                 A domicilio
-                <small>Te lo llevamos (${formatMoney(SHIPPING_FEE)})</small>
+                <small>Te lo llevamos ({formatMoney(SHIPPING_FEE)})</small>
               </label>
             </div>
             <div className="opt">

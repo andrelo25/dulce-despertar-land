@@ -1,11 +1,7 @@
 import { STORE } from "../config";
 import { formatMoney } from "./money";
+import { toWhatsappId } from "./phone";
 import type { DeliveryType } from "./pricing";
-
-/**
- * Parámetros de plantillas de WhatsApp. Meta no admite saltos de línea ni tabulaciones en los
- * parámetros, por eso todo va en una sola línea (ítems separados con "·"). Ver plan §4.8.
- */
 
 export type OrderSummaryItem = {
   name: string;
@@ -42,16 +38,6 @@ export function formatSlotLabel(slot: string): string {
   return slot.replace("-", " a ");
 }
 
-export function summarizeItems(items: readonly OrderSummaryItem[]): string {
-  return items
-    .map((i) => {
-      const personalized = i.messages.some((m) => m.trim() !== "");
-      const detail = `${formatMoney(i.unitPrice * i.qty)}${personalized ? ", con mensaje personalizado" : ""}`;
-      return oneLine(`${i.qty} × ${i.name} (${detail})`);
-    })
-    .join(" · ");
-}
-
 function deliveryText(o: OrderSummary): string {
   if (o.deliveryType === "domicilio") {
     return `Envío a domicilio (${oneLine(o.address ?? "")}), ${formatMoney(o.shippingFee)} de envío incluido`;
@@ -63,32 +49,51 @@ function whenText(o: OrderSummary): string {
   return `${formatDateLabel(o.deliveryDate)}, ${formatSlotLabel(o.deliverySlot)}`;
 }
 
-/** Plantilla `pedido_confirmado` (cliente). Orden fijo: debe coincidir con la plantilla aprobada en Meta. */
-export function confirmedParams(o: OrderSummary): string[] {
-  return [
-    oneLine(o.customerName),
-    String(o.id),
-    summarizeItems(o.items),
-    formatMoney(o.total),
-    deliveryText(o),
-    whenText(o),
-    STORE.paymentAlias,
-  ];
-}
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-/** Plantilla `pedido_cancelado` (cliente): disculpas por no llegar con el pedido. */
-export function cancelledParams(o: OrderSummary): string[] {
-  return [oneLine(o.customerName), String(o.id)];
-}
-
-/** Plantilla `pedido_nuevo_admin` (administrador). */
-export function adminNewOrderParams(o: OrderSummary): string[] {
-  const how = o.deliveryType === "domicilio" ? "Envío a domicilio" : "Retiro en local";
-  return [
-    String(o.id),
-    oneLine(o.customerName),
-    o.customerPhone,
-    formatMoney(o.total),
-    `${how}, ${whenText(o)}`,
+/**
+ * Correo al administrador por pedido nuevo. El asunto va en una sola línea.
+ * `text` lleva el enlace `wa.me` visible; `html` convierte el número del cliente en ese enlace,
+ * para responderle desde el WhatsApp del administrador.
+ */
+export function buildAdminEmail(o: OrderSummary & { note?: string | null }): {
+  subject: string;
+  text: string;
+  html: string;
+} {
+  const waId = toWhatsappId(o.customerPhone);
+  const waUrl = waId ? `https://wa.me/${waId}` : null;
+  const lines = [
+    `Nuevo pedido #${o.id}`,
+    "",
+    // Con enlace válido el número ya va en él; sin enlace se muestra tal cual para no perder el dato.
+    `Cliente: ${oneLine(o.customerName)}${waUrl ? "" : ` (WhatsApp ${o.customerPhone})`}`,
+    ...(waUrl ? [`Responder por WhatsApp: ${waUrl}`] : []),
+    `Entrega: ${deliveryText(o)}`,
+    `Fecha y horario: ${whenText(o)}`,
+    "",
+    "Ítems:",
   ];
+  for (const i of o.items) {
+    lines.push(`- ${i.qty} × ${oneLine(i.name)} — ${formatMoney(i.unitPrice * i.qty)}`);
+    i.messages.forEach((m, idx) => {
+      if (m.trim() !== "") lines.push(`    Mensaje ${idx + 1}: ${oneLine(m)}`);
+    });
+  }
+  lines.push("", `Subtotal: ${formatMoney(o.subtotal)}`);
+  if (o.shippingFee > 0) lines.push(`Envío: ${formatMoney(o.shippingFee)}`);
+  lines.push(`Total: ${formatMoney(o.total)}`);
+  if (o.note?.trim()) lines.push("", `Nota: ${oneLine(o.note)}`);
+  const text = lines.join("\n");
+  // Se escapa todo y recién después se inserta el enlace: la URL es solo dígitos validados.
+  let body = escapeHtml(text);
+  if (waUrl) {
+    body = body.replace(`Responder por WhatsApp: ${waUrl}`, `Responder por WhatsApp: <a href="${waUrl}">${waUrl}</a>`);
+  }
+  return {
+    subject: `Nuevo pedido #${o.id} — ${oneLine(o.customerName)} — ${formatMoney(o.total)}`,
+    text,
+    html: `<div style="white-space:pre-wrap;font-family:sans-serif;font-size:14px">${body}</div>`,
+  };
 }

@@ -9,6 +9,7 @@ export const MAX_TOTAL = 50;
 export const MESSAGE_MAX = 150;
 export const NOTE_MAX = 300;
 export const CONFIRM_WINDOW_MINUTES = 30;
+export const PRODUCT_IMAGE_MAX_BYTES = 2 * 1024 * 1024; // igual que el límite del bucket product-images
 
 export const SECTIONS = ["desayunos", "tortas", "dulces"] as const;
 export type Section = (typeof SECTIONS)[number];
@@ -28,8 +29,8 @@ export const SLOTS = [
 export type Slot = (typeof SLOTS)[number];
 
 export const STORE = {
-  name: "Dulce Despertar",
-  // TODO(usuario): reemplazar por la dirección real del local antes de T11.
-  address: "Dirección del local (a definir)",
-  paymentAlias: "BUENDIA.DESAYUNOS",
+  name: "Manso Box",
+  // NEXT_PUBLIC_ porque la usan componentes de cliente (se fija en el build).
+  address: process.env.NEXT_PUBLIC_STORE_ADDRESS || "Dirección del local (a definir)",
+  paymentAlias: process.env.NEXT_PUBLIC_PAYMENT_ALIAS || "(alias a definir)",
 } as const;

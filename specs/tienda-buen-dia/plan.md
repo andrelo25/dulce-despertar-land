@@ -31,14 +31,13 @@ flowchart TD
     SA[Server Action submitOrder] --> RPC[RPC create_order]
     RPC --> DB
     SA --> AF[after aviso admin]
-    AF --> WA[Modulo WhatsApp]
+    AF --> EM[Modulo email]
     ADM[Panel admin] --> DAL[DAL verifyAdmin]
     DAL --> DB
     ACT[Acciones confirmar cancelar entregar] --> DAL
-    ACT --> WA
   end
   CK --> SA
-  WA --> META[WhatsApp Cloud API]
+  EM --> RS[Resend API]
   ADM --- ST[(Storage product-images)]
 ```
 
@@ -47,7 +46,7 @@ Principios:
 2. **Sin cliente Supabase en el navegador.** Todo acceso a datos ocurre en servidor; el login del admin es una Server Action. Así la clave anónima y la de servicio nunca llegan al bundle.
 3. **Defensa en profundidad para el admin:** proxy (optimista) → DAL `verifyAdmin()` en cada página y acción → RLS en la base.
 4. **Escritura de pedidos solo con la secret key (rol `service_role`)**, dentro de una función SQL transaccional; `anon` no tiene permiso de escritura en `orders`.
-5. Un fallo de WhatsApp nunca revierte ni pierde un pedido (C23).
+5. Un fallo del correo al admin nunca revierte ni pierde un pedido (C17). No hay mensajes automáticos al cliente: el admin le escribe a mano por WhatsApp (decisión de costo).
 
 ## 3. Estructura de archivos
 
@@ -68,7 +67,7 @@ lib/
   supabase/ publishable.ts server.ts secret.ts
   dal.ts                                     # verifyAdmin, getOrders, getAllProducts
   catalog.ts                                 # getCatalog() con use cache
-  whatsapp.ts                                # envío + registro
+  email.ts                                   # aviso por correo a los admins (Resend)
   actions/ orders.ts (submitOrder) admin-orders.ts admin-products.ts auth.ts
 proxy.ts
 supabase/migrations/0001_init.sql, supabase/seed.sql
@@ -90,7 +89,7 @@ supabase/migrations/0001_init.sql, supabase/seed.sql
 | `products` | `id uuid pk`, `name`, `description`, `price int check > 0`, `section` enum(`desayunos`,`tortas`,`dulces`), `motive text null`, `image_url text`, `status` enum(`active`,`unavailable`,`hidden`), `sort_order int`, `created_at`, `updated_at` |
 | `orders` | `id bigint identity (inicia en 1001)`, `customer_name`, `customer_phone` (10 dígitos), `delivery_type` enum(`domicilio`,`retiro`), `address null`, `delivery_at timestamptz`, `delivery_slot text`, `note null`, `subtotal int`, `shipping_fee int`, `total int`, `status` enum(`pendiente`,`confirmado`,`entregado`,`cancelado`), `created_at`, `confirmed_at null`, `check(delivery_type='domicilio' → address not null)`, `check(total = subtotal + shipping_fee)` |
 | `order_items` | `id`, `order_id fk`, `product_id fk (on delete restrict)`, `product_name`, `section`, `unit_price`, `qty int check 1..20`, `messages jsonb` (array de strings, longitud ≤ `qty`; `[]` si no hay) |
-| `whatsapp_messages` | `id`, `order_id fk`, `kind` enum(`admin_new_order`,`customer_confirmed`,`customer_cancelled`), `status` enum(`sent`,`failed`), `error_code null`, `attempts int`, `created_at`, `sent_at null` |
+| `whatsapp_messages` | **Sin uso** (existe en la migración `0001` de un diseño anterior con WhatsApp automático). No se escribe ni se lee; se puede eliminar con una migración futura. |
 
 - Los productos **nunca se borran físicamente** (`on delete restrict`); "baja" = `status='hidden'` (C28). Nombre y precio se copian a `order_items` (C27).
 - **RPC `create_order(...)`** (`security definer`, `execute` revocado a `anon` y `authenticated`, concedido solo a `service_role`): dentro de una transacción lee los productos por id con `for share`, rechaza si alguno no existe o no está `active` (devuelve la lista de nombres afectados, C16), valida cantidades y mensajes, calcula `subtotal`, `shipping_fee`, `total` (C7), inserta `orders` + `order_items` y devuelve `{id, total}`. También aplica el límite anti-abuso (ver §6).
@@ -98,7 +97,7 @@ supabase/migrations/0001_init.sql, supabase/seed.sql
 
 ### 4.3 RLS y Storage
 - `products`: `select` para `anon` solo con `status in ('active','unavailable')`; `insert/update` para admin. Sin `delete` para nadie.
-- `orders`, `order_items`, `whatsapp_messages`: **sin** políticas para `anon`; `select/update` solo admin. Insert únicamente vía RPC con la secret key.
+- `orders`, `order_items`: **sin** políticas para `anon`; `select/update` solo admin. Insert únicamente vía RPC con la secret key.
 - Admin = `auth.jwt() -> 'app_metadata' ->> 'role' = 'admin'`. `app_metadata` solo lo modifica el servidor/dashboard, no el propio usuario (a diferencia de `user_metadata`). Se asigna con un `update auth.users set raw_app_meta_data = …` documentado en el README.
 - Bucket `product-images`: lectura pública; escritura/borrado solo admin; límite de 2 MB y tipos `image/jpeg|png|webp` configurados en el bucket.
 
@@ -109,10 +108,9 @@ supabase/migrations/0001_init.sql, supabase/seed.sql
 | `submitOrder(prev, formData)` | público | `cart` (JSON: `[{productId, qty, messages[]}]`), `name`, `phone`, `deliveryType`, `address`, `date`, `slot`, `note`, `website` (honeypot) | `{ok:true, order:{id,total,…}}` ó `{ok:false, fieldErrors, unavailable?:string[]}` |
 | `login(prev, formData)` | público | email, clave | redirige a `/admin` ó error genérico "Credenciales inválidas" |
 | `logout()` | admin | — | redirige a `/admin/login` |
-| `confirmOrder(id)` | admin | id | actualiza estado → envía plantilla → `{ok, whatsapp:'sent'|'failed'}` |
-| `cancelOrder(id)` | admin | id | idem con plantilla de disculpas |
+| `confirmOrder(id)` | admin | id | `update … where status='pendiente'` → `{ok}`; sin envío de mensajes |
+| `cancelOrder(id)` | admin | id | `update … where status='pendiente'` → `{ok}`; sin envío de mensajes |
 | `markDelivered(id)` | admin | id | `{ok}` |
-| `retryWhatsapp(orderId, kind)` | admin | — | `{ok}` |
 | `saveProduct`, `setProductStatus`, `uploadProductImage` | admin | datos validados | `{ok}`; llaman `updateTag('products')` |
 
 Validaciones servidor de `submitOrder` (orden): honeypot vacío → carrito no vacío, ≤ 20 por producto y ≤ 50 total (C8) → mensajes solo en secciones personalizables, uno por unidad como máximo, ≤ 150 caracteres (C9) → nombre ≥ 2 (C11) → teléfono (C12) → dirección si domicilio (C10) → fecha/franja válidas y `inicio de franja ≥ ahora + 12 h` (C13) → RPC.
@@ -121,7 +119,7 @@ Validaciones servidor de `submitOrder` (orden): honeypot vacío → carrito no v
 - `normalizePhone(input)`: quita espacios, guiones y paréntesis; exige exactamente 10 dígitos y que no empiece en `0`; devuelve 10 dígitos o `null`. `toWhatsappId(d)` = `"549" + d`. Ej.: `351-3445566` → `3513445566` → `5493513445566`. Se rechazan el prefijo `0`, `15` y el `+54`, por la interpretación aprobada en la spec.
 - `slotStart(date, slot)` = `new Date(`${date}T${HH}:00:00-03:00`)`. `isSlotAllowed(date, slot, now)` = `slotStart − now ≥ 12 h` (exactamente 12 h es válido; ejemplo de C13: lunes 20:00 → primera franja martes 08:00–09:00).
 - `computeTotals(items, deliveryType)` = `subtotal` + (`SHIPPING_FEE` si domicilio).
-- `buildMessages` (texto de WhatsApp) para los tres tipos de aviso.
+- `buildAdminEmail` (asunto, texto y HTML del correo al admin; el número del cliente va como enlace `https://wa.me/549…` con `toWhatsappId`).
 
 ### 4.6 Catálogo y caché
 - `getCatalog()` con `'use cache'`, `cacheTag('products')`, `cacheLife('minutes')`. Usa `lib/supabase/publishable.ts` (`createClient` sin cookies). Los productos `hidden` no llegan por RLS (C3); los `unavailable` llegan con su estado (C2).
@@ -135,12 +133,13 @@ Validaciones servidor de `submitOrder` (orden): honeypot vacío → carrito no v
 - Campos nuevos respecto de la referencia: línea de envío en el resumen (C7), bloque "Agregar mensaje personalizado" por unidad (C9), medios de pago en la pantalla final (C14).
 - Disponibilidad de franjas: el cliente calcula con la hora actual **tras montar** (no en render de servidor) solo para UX; la regla real se valida en servidor.
 
-### 4.8 WhatsApp (`lib/whatsapp.ts`)
-- `POST https://graph.facebook.com/{WHATSAPP_API_VERSION}/{WHATSAPP_PHONE_NUMBER_ID}/messages`, `Authorization: Bearer ${WHATSAPP_TOKEN}`, `AbortSignal.timeout(8000)`, tipo `template`, idioma `es_AR`.
-- Plantillas a registrar en Meta: `pedido_nuevo_admin`, `pedido_confirmado`, `pedido_cancelado`. Cada envío escribe una fila en `whatsapp_messages` (estado, código de error, intentos).
-- Los parámetros de plantilla van en una sola línea (`·` como separador de ítems): Meta limita los saltos de línea en parámetros; **confirmar las restricciones exactas al registrar las plantillas**.
-- El aviso al admin se dispara con `after()` tras crear el pedido (C17). La confirmación y la cancelación se esperan (`await`) para mostrar el resultado en el panel (C23).
-- Registro: JSON estructurado, teléfonos enmascarados (`******4567`), nunca token ni cuerpo del mensaje.
+### 4.8 Correo al administrador (`lib/email.ts`)
+- `notifyAdminsNewOrder(order)` se dispara con `after()` en `submitOrder` solo si la RPC creó el pedido (C17); la respuesta al cliente no espera al envío.
+- Destinatarios: `createSecretClient().auth.admin.listUsers()` filtrando `app_metadata.role === 'admin'` (nunca `user_metadata`). Los ítems se leen de `order_items` por `order_id`.
+- `POST https://api.resend.com/emails` con `Authorization: Bearer ${RESEND_API_KEY}`, `from = EMAIL_FROM`, `to` = todos los admins, `text` + `html`, `AbortSignal.timeout(8000)`.
+- El HTML se arma escapando todo el texto del pedido (nombre, dirección, ítems, mensajes y nota los escribe el cliente) y recién después se insertan los dos enlaces `wa.me`, construidos solo con dígitos validados. El administrador responde tocando el enlace, que abre el chat desde su WhatsApp.
+- Nunca lanza: ante fallo (sin configuración, sin admins, HTTP no OK, timeout) registra un JSON `{event:'admin_email_failed', orderId, reason}` sin clave, correos ni contenido. Sin tabla de reintentos: el pedido siempre aparece en el panel (refresco cada 30 s).
+- Límite conocido: `listUsers` se pagina a 1000 usuarios; suficiente para un puñado de admins.
 
 ### 4.9 Autenticación y panel
 - `lib/supabase/server.ts`: `createServerClient` de `@supabase/ssr` con `cookies()`.
@@ -153,7 +152,7 @@ Validaciones servidor de `submitOrder` (orden): honeypot vacío → carrito no v
 
 ## 5. Estrategia de pruebas
 
-Herramientas: `vitest` para lógica pura y acciones con dependencias simuladas; verificación manual guiada para integración con Supabase/Meta; `npm run lint` y `npm run build` al cierre de cada tarea.
+Herramientas: `vitest` para lógica pura y acciones con dependencias simuladas; verificación manual guiada para integración con Supabase/Resend; `npm run lint` y `npm run build` al cierre de cada tarea.
 
 | Criterio | Prueba |
 |---|---|
@@ -164,29 +163,29 @@ Herramientas: `vitest` para lógica pura y acciones con dependencias simuladas; 
 | C10–C13 | Unit del esquema zod con casos: sin dirección, nombre vacío, teléfonos `351-3445566` ✔, `0351…` ✘, `15…` ✘, 9 dígitos ✘; franjas con `now` fijo: exactamente 12 h ✔, 11 h 59 ✘, ejemplo del lunes 20:00 |
 | C14, C15 | Manual: pedido válido deja `pendiente`, vacía carrito, muestra id y medios de pago; sin pantallas de registro |
 | C16 | Manual: pasar un producto a `unavailable` con el carrito armado y confirmar → rechazo con nombre |
-| C17, C21–C23 | Unit de `whatsapp.ts` con `fetch` simulado (éxito, error HTTP, timeout) + prueba real con número de prueba de Meta |
+| C17 | Unit de `email.ts` con `fetch` y Supabase simulados (éxito, error HTTP, timeout, sin admins, sin configuración) + `buildAdminEmail` (enlace `wa.me`, escape de HTML) + prueba real con Resend |
+| C21, C22 | Manual: confirmar y cancelar cambian el estado y no envían ningún mensaje |
 | C18 | Manual: sin sesión `/admin` → login; con la publishable key por PostgREST `select` en `orders` → vacío/denegado |
 | C19 | `grep` del HTML de `/` y del bundle: sin "admin" |
 | C20, C25 | Manual con pedidos de prueba; unit del cálculo `Quedan X min / Demorado X min` |
 | C24 | Manual + prueba de transición inválida (entregar un `pendiente` falla) |
 | C26–C28 | Manual: alta con imagen visible; cambiar precio no altera pedido viejo; baja no rompe el panel de pedidos |
 | C29 | Revisión visual contra la referencia en 360 px, 768 px y 1280 px |
-| Seguridad | Tras `next build`, buscar `sb_secret_`, `SUPABASE_SECRET_KEY` y el token de Meta en `.next/static` (debe dar 0 coincidencias); doble envío del mismo `confirmOrder` envía un solo mensaje |
+| Seguridad | Tras `next build`, buscar `sb_secret_`, `SUPABASE_SECRET_KEY` y `RESEND_API_KEY` en `.next/static` (debe dar 0 coincidencias); doble `confirmOrder` sobre el mismo pedido solo aplica la primera transición |
 
 ## 6. Riesgos y decisiones
 
 | Riesgo | Decisión |
 |---|---|
-| Plantillas de Meta pendientes de aprobación | El envío puede fallar sin romper el flujo: queda `failed` en `whatsapp_messages` y el botón "Reintentar" aparece en el panel. Entregable de arranque: textos de plantilla en el README |
-| Mensajes de plantilla solo a una línea | Los ítems se resumen con `·`; el detalle completo está en el panel |
+| Costo de WhatsApp automático (admin y cliente) | Sin WhatsApp automático. Aviso al admin por correo (Resend) con enlace `wa.me` al cliente; el admin responde a mano. Se reevalúa si el volumen crece. Resend exige dominio verificado para enviar a más de un destinatario distinto de la cuenta |
+| HTML del correo con datos escritos por el cliente | Todo el texto se escapa antes de insertar los enlaces; test con etiquetas y un `<a>` inyectados |
 | Abuso del formulario público (sin cuenta) | Honeypot + límite en la RPC: máximo 3 pedidos `pendiente` por teléfono por hora y máximo 60 pedidos por hora en total. Un límite por IP requiere un almacén externo (Redis) y queda fuera por ahora |
 | Hidratación del carrito en `localStorage` | Se lee tras montar; el contador muestra 0 hasta entonces |
 | Husos horarios (servidor en UTC) | Todas las fechas se construyen con offset fijo `-03:00`; la columna es `timestamptz` |
 | `bodySizeLimit` por defecto de 1 MB | Subir a `3mb` en `next.config.ts` para imágenes de hasta 2 MB; validación de tipo y tamaño también en servidor |
-| Dos admins confirman el mismo pedido | `update … where status='pendiente'` devuelve 0 filas al segundo; no se envía un segundo mensaje |
-| Cancelar un pedido ya confirmado | Fuera de alcance: cancelar solo desde `pendiente`, para no enviar una disculpa tras haber prometido la entrega |
+| Dos admins confirman el mismo pedido | `update … where status='pendiente'` devuelve 0 filas al segundo; la segunda acción es rechazada |
+| Cancelar un pedido ya confirmado | Fuera de alcance: cancelar solo desde `pendiente`, para no contradecir lo ya prometido al cliente |
 | `.env.example` ignorado por git | Agregar `!.env.example` a `.gitignore` |
-| Cambio de versiones de la API de Graph | `WHATSAPP_API_VERSION` como variable de entorno |
 
 ## 7. Cambios respecto del plan anterior (`dulce-despertar-plan.md`)
 
@@ -194,13 +193,13 @@ Herramientas: `vitest` para lógica pura y acciones con dependencias simuladas; 
 2. Costo de envío fijo de $3.000 en `orders.shipping_fee` y en los totales.
 3. Mensaje personalizado por unidad: `order_items.messages`.
 4. Se quita todo enlace público al panel, incluido el pie con "Panel administrador (demo)".
-5. Se agrega el aviso de cancelación (plantilla `pedido_cancelado`) y la tabla `whatsapp_messages` para reintentos.
+5. ~~Aviso de cancelación y tabla `whatsapp_messages` para reintentos.~~ Descartado: sin mensajes automáticos al cliente (costo); el admin escribe a mano desde el enlace `wa.me`.
 6. Creación de pedido en una función SQL transaccional en lugar de insertar desde la acción.
 7. Sin cliente Supabase en el navegador; `image_url` en lugar de `image_path`.
 8. Se adapta a `cacheComponents` (catálogo con `use cache`, panel admin dentro de `<Suspense>`) y a `proxy`, `updateTag`, `revalidateTag(tag,'max')`.
-9. Se quitan el email y las variables de email.
+9. ~~Se quitan el email y las variables de email.~~ Revertido: el aviso de pedido nuevo al admin va por correo (`RESEND_API_KEY`, `EMAIL_FROM`).
 10. Pruebas automáticas con `vitest` para la lógica pura.
 
 ## 8. Variables de entorno (`.env.example`, valores vacíos)
 
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (solo servidor), `WHATSAPP_TOKEN` (solo servidor), `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_API_VERSION`, `ADMIN_WHATSAPP` (10 dígitos), `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` (solo si se despliega en varias instancias).
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (solo servidor), `RESEND_API_KEY` (solo servidor), `EMAIL_FROM`, `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` (solo si se despliega en varias instancias).

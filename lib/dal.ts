@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
+import { PRODUCT_COLUMNS, toProduct, type Product, type ProductRow } from "./domain/catalog";
 import { historyStart, type AdminOrder, type OrderStatus } from "./domain/orders";
 import type { DeliveryType } from "./domain/pricing";
 import { createClient } from "./supabase/server";
@@ -85,3 +86,30 @@ export async function getOrders(): Promise<AdminOrder[]> {
     })),
   }));
 }
+
+/** Todos los productos, incluidos los `hidden` (la política `products_admin_read` lo permite solo al admin). */
+export async function getAllProducts(): Promise<Product[]> {
+  await verifyAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_COLUMNS)
+    .order("section")
+    .order("sort_order")
+    .overrideTypes<ProductRow[], { merge: false }>();
+  if (error) throw new Error("No se pudieron leer los productos");
+  return data.map(toProduct);
+}
+
+export async function getProduct(id: string): Promise<Product | null> {
+  await verifyAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_COLUMNS)
+    .eq("id", id)
+    .maybeSingle<ProductRow>();
+  if (error) throw new Error("No se pudo leer el producto");
+  return data ? toProduct(data) : null;
+}
+

@@ -97,7 +97,7 @@ Cierre común de toda tarea: `npm run lint` y `npm run build` sin errores ni war
   - Hacer: acciones `confirmOrder`, `cancelOrder`, `markDelivered` con transiciones atómicas (`where status=…`) y botones en `OrderCard`. Sin envío de mensajes.
   - Done (C21, C22, C24): confirmar un pendiente lo pasa a `confirmado` y cancelar a `cancelado`, sin enviar ningún mensaje; confirmar o cancelar dos veces seguidas solo aplica la primera; entregar un `pendiente` o cancelar un `confirmado` es rechazado.
 
-- [ ] **T17. Gestión de productos**
+- [x] **T17. Gestión de productos**
   - Depende de: T14, T7.
   - Hacer: `app/admin/productos` (listado con filtros por sección y estado, alta y edición), `uploadProductImage` (tipo y tamaño validados en servidor, 2 MB), acciones `saveProduct` y `setProductStatus`, `updateTag('products')`, `bodySizeLimit` de `3mb` en `next.config.ts`.
   - Done (C26–C28): crear un producto con imagen lo hace visible en `/` de inmediato; marcarlo `unavailable` lo muestra sin botón; `hidden` lo quita; cambiar su precio no modifica un pedido anterior; un pedido viejo con un producto `hidden` sigue abriéndose en el panel; una imagen de 3 MB o un archivo no imagen es rechazado.

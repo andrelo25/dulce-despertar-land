@@ -9,6 +9,7 @@ export const MAX_TOTAL = 50;
 export const MESSAGE_MAX = 150;
 export const NOTE_MAX = 300;
 export const CONFIRM_WINDOW_MINUTES = 30;
+export const PRODUCT_IMAGE_MAX_BYTES = 2 * 1024 * 1024; // igual que el límite del bucket product-images
 
 export const SECTIONS = ["desayunos", "tortas", "dulces"] as const;
 export type Section = (typeof SECTIONS)[number];

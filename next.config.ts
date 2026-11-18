@@ -7,11 +7,13 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 
 const nextConfig: NextConfig = {
   /* config options here */
-  experimental: {
-    agentFeedback: true,
-  },
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    agentFeedback: true,
+    // Imágenes de producto de hasta 2 MB + campos multipart (la validación real está en el servidor).
+    serverActions: { bodySizeLimit: "3mb" },
+  },
   images: {
     remotePatterns: supabaseHost
       ? [
